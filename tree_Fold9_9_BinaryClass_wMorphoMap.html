@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- TODO: add layer indicators-->
+    <!-- TODO: add target names to probas-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotated Decision Tree Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #tree-container {
+            width: 100%;
+            height: 100%;
+        }
+        #explainer {
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .node circle {
+            stroke-width: 2px;
+        }
+        .node text {
+            font: 12px sans-serif;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1px;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+            width: 450px;
+        }
+        .tooltip-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 5px;
+        }
+        .tooltip-label {
+          margin-right: 10px;
+        }
+        .tooltip-table {
+          width: 100%;
+          display: table;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+        .tooltip-table-row {
+          display: table-row;
+        }
+        .tooltip-table-cell {
+          display: table-cell;
+          padding: 5px;
+          border: 1px solid #ddd;
+          text-align: center;
+          vertical-align: middle;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .tooltip-table-row.header {
+          font-weight: bold;
+          background-color: #f2f2f2;
+        }
+
+
+        #fit-button, #unfold-all-button, #collapse-button {
+            position: absolute;
+            top: 10px;
+            z-index: 1000;
+        }
+        #fit-button {
+            left: 10px;
+        }
+        #unfold-all-button {
+            left: 120px;
+        }
+        #collapse-button {
+            left: 220px;
+        }
+    </style>
+</head>
+<body>
+    <button id="fit-button">Fit to Screen</button>
+    <button id="unfold-all-button">Unfold All</button>
+    <button id="collapse-button">Collapse Nodes</button>
+
+    <div id="explainer"><== True | False ==></div>
+    <div id="tree-container"></div>
+
+    <script>
+        // The treeData variable will be defined here by the Python script
+        const treeData = {"root": {"name": "root-node", "feature": "QRS duration", "condition": "greater_than_or_equal", "threshold": 110, "class_counts": [584, 465], "samples": 1049, "targets": ["Control", "Disease"], "probas": [0.5567206863679695, 0.4432793136320305], "coverage": [1.0, 1.0], "is_custom": true, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "root-child-1", "feature": "QRS duration", "condition": "greater_than_or_equal", "threshold": 120, "class_counts": [20, 331], "samples": 351, "targets": ["Control", "Disease"], "probas": [0.05698005698005698, 0.9430199430199431], "coverage": [0.03424657534246575, 0.7118279569892473], "is_custom": true, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": "QRS amplitude Lead A1", "condition": "less_than_or_equal", "threshold": 0.6324262022972107, "class_counts": [2, 280], "samples": 282, "targets": ["Control", "Disease"], "probas": [0.0070921985815602835, 0.9929078014184397], "coverage": [0.003424657534246575, 0.6021505376344086], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 243], "samples": 243, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.5225806451612903], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}, {"name": "right_child", "feature": "T vector Lead A2", "condition": "less_than_or_equal", "threshold": -0.06000000052154064, "class_counts": [2, 37], "samples": 39, "targets": ["Control", "Disease"], "probas": [0.05128205128205128, 0.9487179487179487], "coverage": [0.003424657534246575, 0.07956989247311828], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [2, 3], "samples": 5, "targets": ["Control", "Disease"], "probas": [0.4, 0.6], "coverage": [0.003424657534246575, 0.0064516129032258064], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 34], "samples": 34, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.07311827956989247], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}]}]}, {"name": "right_child", "feature": "QRS vector Lead I3", "condition": "less_than_or_equal", "threshold": -0.22499999403953552, "class_counts": [18, 51], "samples": 69, "targets": ["Control", "Disease"], "probas": [0.2608695652173913, 0.7391304347826086], "coverage": [0.030821917808219176, 0.10967741935483871], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 22], "samples": 22, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.047311827956989246], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}, {"name": "right_child", "feature": "T vector Lead I1", "condition": "less_than_or_equal", "threshold": 0.019999999552965164, "class_counts": [18, 29], "samples": 47, "targets": ["Control", "Disease"], "probas": [0.3829787234042553, 0.6170212765957447], "coverage": [0.030821917808219176, 0.06236559139784946], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": "QRS vector Lead A1", "condition": "less_than_or_equal", "threshold": 0.0800000000745058, "class_counts": [2, 22], "samples": 24, "targets": ["Control", "Disease"], "probas": [0.08333333333333333, 0.9166666666666666], "coverage": [0.003424657534246575, 0.047311827956989246], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 18], "samples": 18, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.03870967741935484], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [2, 4], "samples": 6, "targets": ["Control", "Disease"], "probas": [0.3333333333333333, 0.6666666666666666], "coverage": [0.003424657534246575, 0.008602150537634409], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}]}, {"name": "right_child", "feature": "Morphology Lead I2_both positive and negative, no notch/acc", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [16, 7], "samples": 23, "targets": ["Control", "Disease"], "probas": [0.6956521739130435, 0.30434782608695654], "coverage": [0.0273972602739726, 0.015053763440860216], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": "T vector Lead I3", "condition": "less_than_or_equal", "threshold": 0.009999999776482582, "class_counts": [3, 7], "samples": 10, "targets": ["Control", "Disease"], "probas": [0.3, 0.7], "coverage": [0.005136986301369863, 0.015053763440860216], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": [], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [3, 2], "samples": 5, "targets": ["Control", "Disease"], "probas": [0.6, 0.4], "coverage": [0.005136986301369863, 0.004301075268817204], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 5], "samples": 5, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.010752688172043012], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [13, 0], "samples": 13, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.02226027397260274, 0.0], "is_custom": false, "ignore_after": ["QQ intervals", "Heart rate", "PQ duration", "QT duration", "QTc duration", "T duration", "P duration", "QRS duration"], "features_to_use_next": []}]}]}]}]}, {"name": "root-child-2", "feature": "QRS vector Lead S1", "condition": "less_than_or_equal", "threshold": 0.06499999947845936, "class_counts": [564, 134], "samples": 698, "targets": ["Control", "Disease"], "probas": [0.8080229226361032, 0.19197707736389685], "coverage": [0.9657534246575342, 0.28817204301075267], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "T vector Lead L2", "condition": "less_than_or_equal", "threshold": 0.06499999947845936, "class_counts": [345, 18], "samples": 363, "targets": ["Control", "Disease"], "probas": [0.9504132231404959, 0.049586776859504134], "coverage": [0.5907534246575342, 0.03870967741935484], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "P vector Lead L2", "condition": "less_than_or_equal", "threshold": 0.017508978955447674, "class_counts": [118, 15], "samples": 133, "targets": ["Control", "Disease"], "probas": [0.8872180451127819, 0.11278195488721804], "coverage": [0.20205479452054795, 0.03225806451612903], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "T vector Lead I1", "condition": "less_than_or_equal", "threshold": 0.044999999925494194, "class_counts": [39, 11], "samples": 50, "targets": ["Control", "Disease"], "probas": [0.78, 0.22], "coverage": [0.06678082191780822, 0.023655913978494623], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "P vector Lead L1", "condition": "less_than_or_equal", "threshold": 0.014482835307717323, "class_counts": [36, 5], "samples": 41, "targets": ["Control", "Disease"], "probas": [0.8780487804878049, 0.12195121951219512], "coverage": [0.06164383561643835, 0.010752688172043012], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [21, 0], "samples": 21, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.03595890410958904, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [15, 5], "samples": 20, "targets": ["Control", "Disease"], "probas": [0.75, 0.25], "coverage": [0.025684931506849314, 0.010752688172043012], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [3, 6], "samples": 9, "targets": ["Control", "Disease"], "probas": [0.3333333333333333, 0.6666666666666666], "coverage": [0.005136986301369863, 0.012903225806451613], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}, {"name": "right_child", "feature": "QRS vector Lead A1", "condition": "less_than_or_equal", "threshold": 0.22500000149011612, "class_counts": [79, 4], "samples": 83, "targets": ["Control", "Disease"], "probas": [0.9518072289156626, 0.04819277108433735], "coverage": [0.13527397260273974, 0.008602150537634409], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "QRS vector Lead A1", "condition": "less_than_or_equal", "threshold": -0.20499999821186066, "class_counts": [71, 1], "samples": 72, "targets": ["Control", "Disease"], "probas": [0.9861111111111112, 0.013888888888888888], "coverage": [0.12157534246575342, 0.002150537634408602], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [4, 1], "samples": 5, "targets": ["Control", "Disease"], "probas": [0.8, 0.2], "coverage": [0.00684931506849315, 0.002150537634408602], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [67, 0], "samples": 67, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.11472602739726027, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}, {"name": "right_child", "feature": "P vector Lead I2", "condition": "less_than_or_equal", "threshold": 0.023937960155308247, "class_counts": [8, 3], "samples": 11, "targets": ["Control", "Disease"], "probas": [0.7272727272727273, 0.2727272727272727], "coverage": [0.0136986301369863, 0.0064516129032258064], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [6, 0], "samples": 6, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.010273972602739725, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [2, 3], "samples": 5, "targets": ["Control", "Disease"], "probas": [0.4, 0.6], "coverage": [0.003424657534246575, 0.0064516129032258064], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}]}]}, {"name": "right_child", "feature": "T vector Lead A1", "condition": "less_than_or_equal", "threshold": 0.024999999441206455, "class_counts": [227, 3], "samples": 230, "targets": ["Control", "Disease"], "probas": [0.9869565217391304, 0.013043478260869565], "coverage": [0.3886986301369863, 0.0064516129032258064], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "QRS vector Lead A2", "condition": "less_than_or_equal", "threshold": 0.06110576540231705, "class_counts": [65, 3], "samples": 68, "targets": ["Control", "Disease"], "probas": [0.9558823529411765, 0.04411764705882353], "coverage": [0.1113013698630137, 0.0064516129032258064], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [39, 0], "samples": 39, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.06678082191780822, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": "Morphology Lead A1_only positive, no notch/acc", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [26, 3], "samples": 29, "targets": ["Control", "Disease"], "probas": [0.896551724137931, 0.10344827586206896], "coverage": [0.04452054794520548, 0.0064516129032258064], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [7, 3], "samples": 10, "targets": ["Control", "Disease"], "probas": [0.7, 0.3], "coverage": [0.011986301369863013, 0.0064516129032258064], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [19, 0], "samples": 19, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.032534246575342464, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [162, 0], "samples": 162, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.2773972602739726, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}]}, {"name": "right_child", "feature": "QRS vector Lead I1", "condition": "less_than_or_equal", "threshold": -0.6349999904632568, "class_counts": [219, 116], "samples": 335, "targets": ["Control", "Disease"], "probas": [0.6537313432835821, 0.34626865671641793], "coverage": [0.375, 0.24946236559139784], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "P vector Lead L1", "condition": "less_than_or_equal", "threshold": 0.0796436183154583, "class_counts": [33, 60], "samples": 93, "targets": ["Control", "Disease"], "probas": [0.3548387096774194, 0.6451612903225806], "coverage": [0.05650684931506849, 0.12903225806451613], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "QRS vector Lead I3", "condition": "less_than_or_equal", "threshold": -0.5949999988079071, "class_counts": [15, 52], "samples": 67, "targets": ["Control", "Disease"], "probas": [0.22388059701492538, 0.7761194029850746], "coverage": [0.025684931506849314, 0.11182795698924732], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 20], "samples": 20, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.043010752688172046], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": "Morphology Lead L2_both positive and negative, no notch/acc", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [15, 32], "samples": 47, "targets": ["Control", "Disease"], "probas": [0.3191489361702128, 0.6808510638297872], "coverage": [0.025684931506849314, 0.06881720430107527], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 11], "samples": 11, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.023655913978494623], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [15, 21], "samples": 36, "targets": ["Control", "Disease"], "probas": [0.4166666666666667, 0.5833333333333334], "coverage": [0.025684931506849314, 0.04516129032258064], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}]}, {"name": "right_child", "feature": "Morphology Lead A1_infrequent_sklearn", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [18, 8], "samples": 26, "targets": ["Control", "Disease"], "probas": [0.6923076923076923, 0.3076923076923077], "coverage": [0.030821917808219176, 0.017204301075268817], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "P vector Lead I2", "condition": "less_than_or_equal", "threshold": 0.03499999921768904, "class_counts": [15, 2], "samples": 17, "targets": ["Control", "Disease"], "probas": [0.8823529411764706, 0.11764705882352941], "coverage": [0.025684931506849314, 0.004301075268817204], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [4, 2], "samples": 6, "targets": ["Control", "Disease"], "probas": [0.6666666666666666, 0.3333333333333333], "coverage": [0.00684931506849315, 0.004301075268817204], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [11, 0], "samples": 11, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.018835616438356163, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [3, 6], "samples": 9, "targets": ["Control", "Disease"], "probas": [0.3333333333333333, 0.6666666666666666], "coverage": [0.005136986301369863, 0.012903225806451613], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}]}, {"name": "right_child", "feature": "Morphology Lead S1_both positive and negative, no notch/acc", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [186, 56], "samples": 242, "targets": ["Control", "Disease"], "probas": [0.768595041322314, 0.23140495867768596], "coverage": [0.3184931506849315, 0.12043010752688173], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "T vector Lead L2", "condition": "less_than_or_equal", "threshold": 0.06902504712343216, "class_counts": [24, 32], "samples": 56, "targets": ["Control", "Disease"], "probas": [0.42857142857142855, 0.5714285714285714], "coverage": [0.0410958904109589, 0.06881720430107527], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "T vector Lead I1", "condition": "less_than_or_equal", "threshold": 0.0400000000372529, "class_counts": [6, 23], "samples": 29, "targets": ["Control", "Disease"], "probas": [0.20689655172413793, 0.7931034482758621], "coverage": [0.010273972602739725, 0.04946236559139785], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [6, 14], "samples": 20, "targets": ["Control", "Disease"], "probas": [0.3, 0.7], "coverage": [0.010273972602739725, 0.030107526881720432], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 9], "samples": 9, "targets": ["Control", "Disease"], "probas": [0.0, 1.0], "coverage": [0.0, 0.01935483870967742], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}, {"name": "right_child", "feature": "P vector Lead S1", "condition": "less_than_or_equal", "threshold": -0.017731047235429287, "class_counts": [18, 9], "samples": 27, "targets": ["Control", "Disease"], "probas": [0.6666666666666666, 0.3333333333333333], "coverage": [0.030821917808219176, 0.01935483870967742], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [12, 1], "samples": 13, "targets": ["Control", "Disease"], "probas": [0.9230769230769231, 0.07692307692307693], "coverage": [0.02054794520547945, 0.002150537634408602], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [6, 8], "samples": 14, "targets": ["Control", "Disease"], "probas": [0.42857142857142855, 0.5714285714285714], "coverage": [0.010273972602739725, 0.017204301075268817], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}]}, {"name": "right_child", "feature": "T vector Lead L1", "condition": "less_than_or_equal", "threshold": 0.26500000059604645, "class_counts": [162, 24], "samples": 186, "targets": ["Control", "Disease"], "probas": [0.8709677419354839, 0.12903225806451613], "coverage": [0.2773972602739726, 0.05161290322580645], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": "T vector Lead I3", "condition": "less_than_or_equal", "threshold": 0.014999999664723873, "class_counts": [87, 22], "samples": 109, "targets": ["Control", "Disease"], "probas": [0.7981651376146789, 0.2018348623853211], "coverage": [0.14897260273972604, 0.047311827956989246], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [66, 8], "samples": 74, "targets": ["Control", "Disease"], "probas": [0.8918918918918919, 0.10810810810810811], "coverage": [0.11301369863013698, 0.017204301075268817], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [21, 14], "samples": 35, "targets": ["Control", "Disease"], "probas": [0.6, 0.4], "coverage": [0.03595890410958904, 0.030107526881720432], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}, {"name": "right_child", "feature": "P vector Lead I3", "condition": "less_than_or_equal", "threshold": 0.054999999701976776, "class_counts": [75, 2], "samples": 77, "targets": ["Control", "Disease"], "probas": [0.974025974025974, 0.025974025974025976], "coverage": [0.1284246575342466, 0.004301075268817204], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"], "children": [{"name": "left_child", "feature": null, "condition": null, "threshold": null, "class_counts": [71, 0], "samples": 71, "targets": ["Control", "Disease"], "probas": [1.0, 0.0], "coverage": [0.12157534246575342, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}, {"name": "right_child", "feature": null, "condition": null, "threshold": null, "class_counts": [4, 2], "samples": 6, "targets": ["Control", "Disease"], "probas": [0.6666666666666666, 0.3333333333333333], "coverage": [0.00684931506849315, 0.004301075268817204], "is_custom": false, "ignore_after": [], "features_to_use_next": ["Morphology Lead A1", "Morphology Lead L1", "Morphology Lead S1", "Morphology Lead A2", "Morphology Lead L2", "Morphology Lead I1", "Morphology Lead I2", "Morphology Lead I3", "QRS vector Lead A1", "P vector Lead A1", "T vector Lead A1", "QRS vector Lead L1", "P vector Lead L1", "T vector Lead L1", "QRS vector Lead S1", "P vector Lead S1", "T vector Lead S1", "QRS vector Lead A2", "P vector Lead A2", "T vector Lead A2", "QRS vector Lead L2", "P vector Lead L2", "T vector Lead L2", "QRS vector Lead I1", "P vector Lead I1", "T vector Lead I1", "QRS vector Lead I2", "P vector Lead I2", "T vector Lead I2", "QRS vector Lead I3", "P vector Lead I3", "T vector Lead I3"]}]}]}]}]}]}]}, "feature_names": ["QRS amplitude Lead L2", "QRS amplitude Lead I3", "T vector Lead I1", "T vector Lead I2", "P vector Lead I2", "P vector Lead L1", "QRS vector Lead L2", "P vector Lead I3", "QRS amplitude Lead I2", "QRS vector Lead I1", "T vector Lead A2", "QRS vector Lead L1", "P vector Lead S1", "P duration", "QRS duration", "T vector Lead L1", "QRS vector Lead A2", "QRS vector Lead I2", "QRS vector Lead I3", "P vector Lead A1", "QT duration", "QTc duration", "P vector Lead A2", "T vector Lead S1", "QRS amplitude Lead I1", "T vector Lead L2", "QRS amplitude Lead A2", "QRS vector Lead A1", "Heart rate", "P vector Lead L2", "P vector Lead I1", "QRS amplitude Lead A1", "T vector Lead A1", "QRS vector Lead S1", "PQ duration", "T vector Lead I3", "QRS amplitude Lead S1", "T duration", "QQ intervals", "QRS amplitude Lead L1", "Morphology Lead A1_both positive and negative, no notch/acc", "Morphology Lead A1_none", "Morphology Lead A1_only positive, no notch/acc", "Morphology Lead A1_infrequent_sklearn", "Morphology Lead A2_both positive and negative, no notch/acc", "Morphology Lead A2_only positive, no notch/acc", "Morphology Lead A2_infrequent_sklearn", "Morphology Lead I2_both positive and negative, no notch/acc", "Morphology Lead I2_only negative, no notch/acc", "Morphology Lead I2_infrequent_sklearn", "Morphology Lead I1_both positive and negative, no notch/acc", "Morphology Lead I1_infrequent_sklearn", "Morphology Lead I3_both positive and negative, no notch/acc", "Morphology Lead I3_only negative, no notch/acc", "Morphology Lead I3_infrequent_sklearn", "Morphology Lead L2_both positive and negative, no notch/acc", "Morphology Lead L2_infrequent_sklearn", "Morphology Lead S1_both positive and negative, no notch/acc", "Morphology Lead S1_only positive, no notch/acc", "Morphology Lead S1_infrequent_sklearn", "Morphology Lead L1_both positive and negative, no notch/acc", "Morphology Lead L1_infrequent_sklearn"], "n_classes": 2, "classes": [0, 1]};
+
+        // Set up the dimensions for the diagram
+        const margin = {top: 40, right: 90, bottom: 50, left: 90};
+        const width = window.innerWidth - margin.left - margin.right;
+        const height = window.innerHeight - margin.top - margin.bottom;
+
+        const conditionSymbols = {
+            "less_than": "<",
+            "less_than_or_equal": "≤",
+            "greater_than": ">",
+            "greater_than_or_equal": "≥"
+        };
+        function collapseNodes(d, minSamples) {
+            if (d.children) {
+                if (d.data.samples < minSamples) {
+                    d._children = d.children;
+                    d.children = null;
+                } else {
+                    d.children.forEach(child => collapseNodes(child, minSamples));
+                }
+            }
+        }
+
+        // Add this function to handle the collapse button click
+        function handleCollapse() {
+            const minSamples = parseInt(prompt("Enter minimum number of samples:", "100"));
+            if (isNaN(minSamples)) return;
+
+            collapseNodes(root, minSamples);
+            update(root);
+            fitToScreen();
+        }
+
+        // Add event listener to the collapse button
+        d3.select("#collapse-button").on("click", handleCollapse);
+
+        // Helper function to get the symbol for a condition
+        function getConditionSymbol(condition) {
+            return conditionSymbols[condition] || condition;
+        }
+        // Create the SVG container
+        const svg = d3.select("#tree-container")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom);
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Create a tooltip
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        function getMaxProba(d) {
+            return Math.max(...d.data.probas);
+        }
+
+        function getProbaIncrease(d) {
+            if (!d.parent) return 0;
+            return getMaxProba(d) - getMaxProba(d.parent);
+        }
+
+        function getMaxProbaIncrease(d) {
+            if (!d.parent) return 0;
+            return Math.max(...d.data.probas.map((p, i) => p - d.parent.data.probas[i]));
+        }
+
+        // Create a tree layout
+        const tree = d3.tree().size([width, height]);
+
+        // Create the root node
+        const root = d3.hierarchy(treeData.root);
+
+        // Calculate the maximum number of samples for scaling
+        const maxSamples = d3.max(root.descendants(), d => d.data.samples);
+
+        // Calculate the maximum probability in the entire tree
+        const rootMaxProba = getMaxProba(root);
+
+        // Create a scale for node radius
+        const radiusScale = d3.scaleSqrt()
+            .domain([0, maxSamples])
+            .range([3, 20]);
+
+        // Create a scale for link thickness
+        const linkScale = d3.scaleLinear()
+            .domain([0, 1])
+            .range([1, 17]);
+
+        // Function to recursively process the tree and set is_custom
+        let nodeId = 0;
+        root.eachBefore(d => {
+            d.id = nodeId++;
+            d.x0 = width / 2;
+            d.y0 = 0;
+        });
+
+
+
+        // Collapse the node and all its children
+        function collapse(d) {
+            if (d.children) {
+                d._children = d.children;
+                d._children.forEach(collapse);
+                d.children = null;
+            }
+        }
+
+        // Expand a node
+        function expand(d) {
+            if (d._children) {
+                d.children = d._children;
+                d._children = null;
+            }
+            if (d.children) {
+                d.children.forEach(expand);
+            }
+        }
+
+        // Toggle children on click
+        function click(event, d) {
+            if (d.children) {
+                collapse(d);
+            } else {
+                expand(d);
+            }
+            update(d);
+        }
+
+        // Update the tree
+        function update(source) {
+            const treeData = tree(root);
+            const nodes = treeData.descendants();
+            const links = treeData.descendants().slice(1);
+
+            nodes.forEach(d => {
+                d.y = d.depth * 180;
+            });
+
+            const node = g.selectAll('.node')
+                .data(nodes, d => d.id || (d.id = ++nodeId));
+
+            const nodeEnter = node.enter().append('g')
+                .attr('class', 'node')
+                .attr("transform", d => `translate(${source.x0},${source.y0})`)
+                .on('click', (event, d) => {
+                    if (d.children) {
+                        d._children = d.children;
+                        d.children = null;
+                    } else {
+                        d.children = d._children;
+                        d._children = null;
+                    }
+                    update(d);
+                });
+
+            nodeEnter.append('circle')
+                .attr('r', 1e-6)
+                .style("fill", d => d.data.is_custom ? "green" : "red")  // Color based on is_custom
+                .style("stroke", d => d._children ? "lightsteelblue" : "#fff")
+                .on("mouseover", function(event, d) {
+                let tooltipContent = '';
+
+                if (d.data.feature) {
+                    const symbol = getConditionSymbol(d.data.condition);
+                    tooltipContent += `<div class="tooltip-row"><span>Feature:</span><span><b>${d.data.feature}</b></span></div>`;
+                    tooltipContent += `<div class="tooltip-row"><span>Condition:</span><span><b>${symbol}</b></span></div>`;
+                    tooltipContent += `<div class="tooltip-row"><span>Threshold:</span><span><b>${d.data.threshold.toFixed(2)}</b></span></div>`;
+                } else {
+                    tooltipContent += `<div class="tooltip-row"><span>Node Type:</span><span>Leaf</span></div>`;
+                }
+
+                tooltipContent += `<div class="tooltip-row"><span>Samples:</span><span><b>${d.data.samples}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Probas:</span><span><b>${d.data.probas.map(p => (p * 100).toFixed(2) + '%').join(', ')}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Coverage:</span><span><b>${d.data.coverage.map(c => (c * 100).toFixed(2) + '%').join(', ')}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Custom:</span><span><b>${d.data.is_custom ? "Yes" : "No"}</b></span></div>`;
+
+                tooltip.transition().duration(200).style("opacity", .9);
+                tooltip.html(tooltipContent)
+                  .style("left", (event.pageX + 10) + "px")
+                  .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", () => tooltip.transition().duration(300).style("opacity", 0));
+
+            nodeEnter.append('text')
+            .attr("dy", ".35em")
+            .attr("font-weight", 700)
+            .attr("x", d => d.children || d._children ? -13 : 13)
+            .attr("text-anchor", d => d.children || d._children ? "end" : "start")
+            .text(d => {
+                if (d.data.feature) {
+                    const symbol = getConditionSymbol(d.data.condition);
+                    return `${d.data.feature} ${symbol} ${d.data.threshold.toFixed(2)}`;
+                } else {
+                    return `${d.data.samples}`;
+                }
+            }).attr("transform", "rotate(-20)");
+
+            const nodeUpdate = nodeEnter.merge(node);
+
+            nodeEnter.on("mouseover", (event, d) => {
+                let tooltipContent = d.data.feature
+                    ? `<div class="tooltip-row"><span>Feature:</span><span><b>${d.data.feature}</b></span></div>
+<br><div class="tooltip-row"><span>Condition:</span><span><b>${d.data.condition}</b></span></div>
+<br><div class="tooltip-row"><span>Threshold:</span><span><b>${d.data.threshold.toFixed(2)}</b></span></div>`
+                    : `Leaf Node`;
+
+                tooltipContent += `<br><div class="tooltip-row"><span>Samples:</span><span><b>${d.data.samples} (${Math.round(100*d.data.samples/maxSamples,2)}%)</b></span></div>`;
+
+                tooltipContent += `<br><div class="tooltip-table">`
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Classes</b></div>${d.data.targets.map(p => '<div class="tooltip-table-cell"><b>' + p + '</b></div>').join('')}</div>`;
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Probas</b></div>${d.data.probas.map(p => '<div class="tooltip-table-cell">' +(p * 100).toFixed(2) + '%</div>').join('')}</div>`;
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Coverage</b></div>${d.data.coverage.map(p => '<div class="tooltip-table-cell">' + (p * 100).toFixed(2) + '%</div>').join('')}</div>`;
+                tooltipContent += `</div>`
+
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html(tooltipContent)
+                    .style("left", (event.pageX + 28) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", d => {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+            nodeUpdate.transition()
+                .duration(750)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            nodeUpdate.select('circle')
+                .attr('r', d => radiusScale(d.data.samples))
+                .style("fill", d => d.data.is_custom ? "green" : "red")  // Color based on is_custom
+                .style("stroke", d => d._children ? "lightsteelblue" : "#fff")
+                .attr('cursor', 'pointer');
+
+            nodeUpdate.select('circle.node')
+                .attr('r', 10)
+                .style("fill", d => d.data.feature ? "#fff" : colorScale(d.data.probas[1]))
+                .attr('cursor', 'pointer');
+
+            const nodeExit = node.exit().transition()
+                .duration(750)
+                .attr("transform", d => `translate(${source.x},${source.y})`)
+                .remove();
+
+            nodeExit.select('circle').attr('r', 1e-6);
+            nodeExit.select('text').style('fill-opacity', 1e-6);
+
+            const link = g.selectAll('path.link')
+                .data(links, d => d.id);
+
+
+            const linkEnter = link.enter().insert('path', "g")
+                .attr("class", "link")
+                .attr('d', d => {
+                    const o = {x: source.x0, y: source.y0};
+                    return diagonal(o, o);
+                })
+                .style("stroke-width", d => linkScale(getMaxProbaIncrease(d)));
+
+            const linkUpdate = linkEnter.merge(link);
+
+
+            linkUpdate.transition()
+                .duration(750)
+                .attr('d', d => diagonal(d, d.parent))
+                .style("stroke-width", d => linkScale(getMaxProbaIncrease(d)));
+
+            link.exit().transition()
+                .duration(750)
+                .attr('d', d => {
+                    const o = {x: source.x, y: source.y};
+                    return diagonal(o, o);
+                })
+                .remove();
+
+            nodes.forEach(d => {
+                d.x0 = d.x;
+                d.y0 = d.y;
+            });
+
+            function diagonal(s, d) {
+                return `M ${s.x} ${s.y}
+                        C ${s.x} ${(s.y + d.y) / 2},
+                          ${d.x} ${(s.y + d.y) / 2},
+                          ${d.x} ${d.y}`;
+            }
+        }
+
+        update(root);
+
+        // Fit to screen function
+        function fitToScreen() {
+            const bounds = g.node().getBBox();
+            const fullWidth = width + margin.left + margin.right;
+            const fullHeight = height + margin.top + margin.bottom;
+            const scale = 0.95 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+            const translate = [
+                fullWidth / 2 - scale * (bounds.x + bounds.width / 2),
+                fullHeight / 2 - scale * (bounds.y + bounds.height / 2)
+            ];
+
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+            );
+        }
+
+        // Unfold all branches function
+        function unfoldAll() {
+            expand(root);
+            update(root);
+            fitToScreen();
+        }
+
+        // Add event listener to the fit button
+        d3.select("#fit-button").on("click", fitToScreen);
+
+        // Add event listener to the unfold all button
+        d3.select("#unfold-all-button").on("click", unfoldAll);
+
+        // Initial fit to screen
+        fitToScreen();
+    </script>
+</body>
+</html>

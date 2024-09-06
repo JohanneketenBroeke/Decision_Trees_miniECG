@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- TODO: add layer indicators-->
+    <!-- TODO: add target names to probas-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotated Decision Tree Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #tree-container {
+            width: 100%;
+            height: 100%;
+        }
+        #explainer {
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .node circle {
+            stroke-width: 2px;
+        }
+        .node text {
+            font: 12px sans-serif;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1px;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+            width: 450px;
+        }
+        .tooltip-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 5px;
+        }
+        .tooltip-label {
+          margin-right: 10px;
+        }
+        .tooltip-table {
+          width: 100%;
+          display: table;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+        .tooltip-table-row {
+          display: table-row;
+        }
+        .tooltip-table-cell {
+          display: table-cell;
+          padding: 5px;
+          border: 1px solid #ddd;
+          text-align: center;
+          vertical-align: middle;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .tooltip-table-row.header {
+          font-weight: bold;
+          background-color: #f2f2f2;
+        }
+
+
+        #fit-button, #unfold-all-button, #collapse-button {
+            position: absolute;
+            top: 10px;
+            z-index: 1000;
+        }
+        #fit-button {
+            left: 10px;
+        }
+        #unfold-all-button {
+            left: 120px;
+        }
+        #collapse-button {
+            left: 220px;
+        }
+    </style>
+</head>
+<body>
+    <button id="fit-button">Fit to Screen</button>
+    <button id="unfold-all-button">Unfold All</button>
+    <button id="collapse-button">Collapse Nodes</button>
+
+    <div id="explainer"><== True | False ==></div>
+    <div id="tree-container"></div>
+
+    <script>
+        // The treeData variable will be defined here by the Python script
+        const treeData = {"root": {"name": "node_0", "feature": "QRS amplitude Lead I2", "condition": "less_than_or_equal", "threshold": 0.8449999988079071, "class_counts": [318, 318, 318], "samples": 956, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333], "coverage": [0.5435897435897435, 1.7865168539325842, 1.6476683937823835], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_1", "feature": "QRS amplitude Lead L1", "condition": "less_than_or_equal", "threshold": 0.7150000035762787, "class_counts": [290, 134, 330], "samples": 755, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.38461538461538464, 0.17771883289124668, 0.4376657824933687], "coverage": [0.49572649572649574, 0.7528089887640449, 1.7098445595854923], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_3", "feature": "QRS amplitude Lead I2", "condition": "less_than_or_equal", "threshold": 0.5450000166893005, "class_counts": [57, 38, 173], "samples": 270, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.2126865671641791, 0.1417910447761194, 0.6455223880597015], "coverage": [0.09743589743589744, 0.21348314606741572, 0.8963730569948186], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_9", "feature": "Morphology Lead I1_both positive and negative, no notch/acc", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [51, 18, 155], "samples": 226, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.22767857142857142, 0.08035714285714286, 0.6919642857142857], "coverage": [0.08717948717948718, 0.10112359550561797, 0.8031088082901554], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_13", "feature": "QRS amplitude Lead L1", "condition": "less_than_or_equal", "threshold": 0.38499999046325684, "class_counts": [7, 8, 57], "samples": 74, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.09722222222222222, 0.1111111111111111, 0.7916666666666666], "coverage": [0.011965811965811967, 0.0449438202247191, 0.29533678756476683], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_23", "feature": null, "condition": null, "threshold": null, "class_counts": [3, 7, 26], "samples": 38, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.08333333333333333, 0.19444444444444445, 0.7222222222222222], "coverage": [0.005128205128205128, 0.03932584269662921, 0.13471502590673576], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_24", "feature": null, "condition": null, "threshold": null, "class_counts": [3, 1, 31], "samples": 36, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.08571428571428572, 0.02857142857142857, 0.8857142857142857], "coverage": [0.005128205128205128, 0.0056179775280898875, 0.16062176165803108], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}, {"name": "node_14", "feature": "QRS vector Lead S1", "condition": "less_than_or_equal", "threshold": 0.024999999441206455, "class_counts": [48, 8, 95], "samples": 152, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.31788079470198677, 0.052980132450331126, 0.6291390728476821], "coverage": [0.08205128205128205, 0.0449438202247191, 0.49222797927461137], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_17", "feature": null, "condition": null, "threshold": null, "class_counts": [28, 0, 31], "samples": 60, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.4745762711864407, 0.0, 0.5254237288135594], "coverage": [0.04786324786324787, 0.0, 0.16062176165803108], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_18", "feature": null, "condition": null, "threshold": null, "class_counts": [21, 8, 62], "samples": 92, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.23076923076923078, 0.08791208791208792, 0.6813186813186813], "coverage": [0.035897435897435895, 0.0449438202247191, 0.32124352331606215], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}, {"name": "leaf_10", "feature": null, "condition": null, "threshold": null, "class_counts": [6, 18, 19], "samples": 44, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.13953488372093023, 0.4186046511627907, 0.4418604651162791], "coverage": [0.010256410256410256, 0.10112359550561797, 0.09844559585492228], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}, {"name": "node_4", "feature": "QRS vector Lead L1", "condition": "less_than_or_equal", "threshold": -0.38499999046325684, "class_counts": [252, 99, 132], "samples": 485, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.5217391304347826, 0.20496894409937888, 0.2732919254658385], "coverage": [0.4307692307692308, 0.5561797752808989, 0.6839378238341969], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_5", "feature": "Morphology Lead S1_both positive and negative, no notch/acc", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [35, 46, 60], "samples": 143, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.24822695035460993, 0.3262411347517731, 0.425531914893617], "coverage": [0.05982905982905983, 0.25842696629213485, 0.31088082901554404], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_11", "feature": null, "condition": null, "threshold": null, "class_counts": [2, 18, 22], "samples": 43, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.047619047619047616, 0.42857142857142855, 0.5238095238095238], "coverage": [0.003418803418803419, 0.10112359550561797, 0.11398963730569948], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_12", "feature": null, "condition": null, "threshold": null, "class_counts": [39, 25, 35], "samples": 100, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.3939393939393939, 0.25252525252525254, 0.35353535353535354], "coverage": [0.06666666666666667, 0.1404494382022472, 0.18134715025906736], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}, {"name": "node_6", "feature": "QRS amplitude Lead S1", "condition": "less_than_or_equal", "threshold": 0.4749999940395355, "class_counts": [241, 42, 58], "samples": 342, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.7067448680351907, 0.12316715542521994, 0.17008797653958943], "coverage": [0.41196581196581195, 0.23595505617977527, 0.3005181347150259], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_15", "feature": "QRS vector Lead A2", "condition": "less_than_or_equal", "threshold": 0.044999999925494194, "class_counts": [132, 12, 51], "samples": 197, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.676923076923077, 0.06153846153846154, 0.26153846153846155], "coverage": [0.22564102564102564, 0.06741573033707865, 0.26424870466321243], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_21", "feature": null, "condition": null, "threshold": null, "class_counts": [49, 4, 30], "samples": 85, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.5903614457831325, 0.04819277108433735, 0.3614457831325301], "coverage": [0.08376068376068375, 0.02247191011235955, 0.15544041450777202], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_22", "feature": null, "condition": null, "threshold": null, "class_counts": [83, 8, 20], "samples": 112, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.7477477477477478, 0.07207207207207207, 0.18018018018018017], "coverage": [0.14188034188034188, 0.0449438202247191, 0.10362694300518134], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}, {"name": "leaf_16", "feature": null, "condition": null, "threshold": null, "class_counts": [109, 30, 5], "samples": 145, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.7569444444444444, 0.20833333333333334, 0.034722222222222224], "coverage": [0.18632478632478633, 0.16853932584269662, 0.025906735751295335], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}]}, {"name": "node_2", "feature": "QRS vector Lead I3", "condition": "less_than_or_equal", "threshold": -0.24000000208616257, "class_counts": [38, 155, 7], "samples": 201, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.19, 0.775, 0.035], "coverage": [0.06495726495726496, 0.8707865168539326, 0.03626943005181347], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_7", "feature": "QRS amplitude Lead I3", "condition": "less_than_or_equal", "threshold": 0.7049999833106995, "class_counts": [9, 101, 5], "samples": 116, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.0782608695652174, 0.8782608695652174, 0.043478260869565216], "coverage": [0.015384615384615385, 0.5674157303370787, 0.025906735751295335], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_19", "feature": null, "condition": null, "threshold": null, "class_counts": [7, 38, 5], "samples": 51, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.14, 0.76, 0.1], "coverage": [0.011965811965811967, 0.21348314606741572, 0.025906735751295335], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "node_20", "feature": "QRS vector Lead L1", "condition": "less_than_or_equal", "threshold": -1.0549999475479126, "class_counts": [2, 61, 0], "samples": 65, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.031746031746031744, 0.9682539682539683, 0.0], "coverage": [0.003418803418803419, 0.34269662921348315, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_25", "feature": null, "condition": null, "threshold": null, "class_counts": [0, 32, 0], "samples": 33, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.0, 1.0, 0.0], "coverage": [0.0, 0.1797752808988764, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_26", "feature": null, "condition": null, "threshold": null, "class_counts": [2, 29, 0], "samples": 32, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.06451612903225806, 0.9354838709677419, 0.0], "coverage": [0.003418803418803419, 0.16292134831460675, 0.0], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}, {"name": "leaf_8", "feature": null, "condition": null, "threshold": null, "class_counts": [37, 46, 1], "samples": 85, "targets": ["Control", "LVH", "Microvoltages"], "probas": [0.44047619047619047, 0.5476190476190477, 0.011904761904761904], "coverage": [0.06324786324786325, 0.25842696629213485, 0.0051813471502590676], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}, "feature_names": ["QRS amplitude Lead L2", "QRS amplitude Lead I3", "QRS vector Lead L2", "QRS amplitude Lead I2", "QRS vector Lead I1", "QRS vector Lead L1", "QRS vector Lead A2", "QRS vector Lead I2", "QRS vector Lead I3", "QRS amplitude Lead I1", "QRS amplitude Lead A2", "QRS vector Lead A1", "QRS vector Lead S1", "QRS amplitude Lead A1", "QRS amplitude Lead S1", "QRS amplitude Lead L1", "Morphology Lead A1_both positive and negative, no notch/acc", "Morphology Lead A1_none", "Morphology Lead A1_only negative, no notch/acc", "Morphology Lead A1_only positive, no notch/acc", "Morphology Lead A1_infrequent_sklearn", "Morphology Lead A2_both positive and negative, no notch/acc", "Morphology Lead A2_none", "Morphology Lead A2_only negative, no notch/acc", "Morphology Lead A2_only positive, no notch/acc", "Morphology Lead A2_infrequent_sklearn", "Morphology Lead I2_both positive and negative with notch/accent", "Morphology Lead I2_both positive and negative, no notch/acc", "Morphology Lead I2_only negative, no notch/acc", "Morphology Lead I2_only positive with notch/accent", "Morphology Lead I2_only positive, no notch/acc", "Morphology Lead I2_infrequent_sklearn", "Morphology Lead I1_both positive and negative with notch/accent", "Morphology Lead I1_both positive and negative, no notch/acc", "Morphology Lead I1_only negative, no notch/acc", "Morphology Lead I1_only positive with notch/accent", "Morphology Lead I1_infrequent_sklearn", "Morphology Lead I3_both positive and negative with notch/accent", "Morphology Lead I3_both positive and negative, no notch/acc", "Morphology Lead I3_only negative, no notch/acc", "Morphology Lead I3_only positive, no notch/acc", "Morphology Lead I3_infrequent_sklearn", "Morphology Lead L2_both positive and negative with notch/accent", "Morphology Lead L2_both positive and negative, no notch/acc", "Morphology Lead L2_only negative, no notch/acc", "Morphology Lead L2_only positive with notch/accent", "Morphology Lead L2_only positive, no notch/acc", "Morphology Lead L2_infrequent_sklearn", "Morphology Lead S1_both positive and negative, no notch/acc", "Morphology Lead S1_none", "Morphology Lead S1_only negative, no notch/acc", "Morphology Lead S1_only positive, no notch/acc", "Morphology Lead S1_infrequent_sklearn", "Morphology Lead L1_both positive and negative with notch/accent", "Morphology Lead L1_both positive and negative, no notch/acc", "Morphology Lead L1_only negative, no notch/acc", "Morphology Lead L1_only positive with notch/accent", "Morphology Lead L1_infrequent_sklearn"], "n_classes": 3, "classes": [0, 1, 2]};
+
+        // Set up the dimensions for the diagram
+        const margin = {top: 40, right: 90, bottom: 50, left: 90};
+        const width = window.innerWidth - margin.left - margin.right;
+        const height = window.innerHeight - margin.top - margin.bottom;
+
+        const conditionSymbols = {
+            "less_than": "<",
+            "less_than_or_equal": "≤",
+            "greater_than": ">",
+            "greater_than_or_equal": "≥"
+        };
+        function collapseNodes(d, minSamples) {
+            if (d.children) {
+                if (d.data.samples < minSamples) {
+                    d._children = d.children;
+                    d.children = null;
+                } else {
+                    d.children.forEach(child => collapseNodes(child, minSamples));
+                }
+            }
+        }
+
+        // Add this function to handle the collapse button click
+        function handleCollapse() {
+            const minSamples = parseInt(prompt("Enter minimum number of samples:", "100"));
+            if (isNaN(minSamples)) return;
+
+            collapseNodes(root, minSamples);
+            update(root);
+            fitToScreen();
+        }
+
+        // Add event listener to the collapse button
+        d3.select("#collapse-button").on("click", handleCollapse);
+
+        // Helper function to get the symbol for a condition
+        function getConditionSymbol(condition) {
+            return conditionSymbols[condition] || condition;
+        }
+        // Create the SVG container
+        const svg = d3.select("#tree-container")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom);
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Create a tooltip
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        function getMaxProba(d) {
+            return Math.max(...d.data.probas);
+        }
+
+        function getProbaIncrease(d) {
+            if (!d.parent) return 0;
+            return getMaxProba(d) - getMaxProba(d.parent);
+        }
+
+        function getMaxProbaIncrease(d) {
+            if (!d.parent) return 0;
+            return Math.max(...d.data.probas.map((p, i) => p - d.parent.data.probas[i]));
+        }
+
+        // Create a tree layout
+        const tree = d3.tree().size([width, height]);
+
+        // Create the root node
+        const root = d3.hierarchy(treeData.root);
+
+        // Calculate the maximum number of samples for scaling
+        const maxSamples = d3.max(root.descendants(), d => d.data.samples);
+
+        // Calculate the maximum probability in the entire tree
+        const rootMaxProba = getMaxProba(root);
+
+        // Create a scale for node radius
+        const radiusScale = d3.scaleSqrt()
+            .domain([0, maxSamples])
+            .range([3, 20]);
+
+        // Create a scale for link thickness
+        const linkScale = d3.scaleLinear()
+            .domain([0, 1])
+            .range([1, 17]);
+
+        // Function to recursively process the tree and set is_custom
+        let nodeId = 0;
+        root.eachBefore(d => {
+            d.id = nodeId++;
+            d.x0 = width / 2;
+            d.y0 = 0;
+        });
+
+
+
+        // Collapse the node and all its children
+        function collapse(d) {
+            if (d.children) {
+                d._children = d.children;
+                d._children.forEach(collapse);
+                d.children = null;
+            }
+        }
+
+        // Expand a node
+        function expand(d) {
+            if (d._children) {
+                d.children = d._children;
+                d._children = null;
+            }
+            if (d.children) {
+                d.children.forEach(expand);
+            }
+        }
+
+        // Toggle children on click
+        function click(event, d) {
+            if (d.children) {
+                collapse(d);
+            } else {
+                expand(d);
+            }
+            update(d);
+        }
+
+        // Update the tree
+        function update(source) {
+            const treeData = tree(root);
+            const nodes = treeData.descendants();
+            const links = treeData.descendants().slice(1);
+
+            nodes.forEach(d => {
+                d.y = d.depth * 180;
+            });
+
+            const node = g.selectAll('.node')
+                .data(nodes, d => d.id || (d.id = ++nodeId));
+
+            const nodeEnter = node.enter().append('g')
+                .attr('class', 'node')
+                .attr("transform", d => `translate(${source.x0},${source.y0})`)
+                .on('click', (event, d) => {
+                    if (d.children) {
+                        d._children = d.children;
+                        d.children = null;
+                    } else {
+                        d.children = d._children;
+                        d._children = null;
+                    }
+                    update(d);
+                });
+
+            nodeEnter.append('circle')
+                .attr('r', 1e-6)
+                .style("fill", d => d.data.is_custom ? "green" : "red")  // Color based on is_custom
+                .style("stroke", d => d._children ? "lightsteelblue" : "#fff")
+                .on("mouseover", function(event, d) {
+                let tooltipContent = '';
+
+                if (d.data.feature) {
+                    const symbol = getConditionSymbol(d.data.condition);
+                    tooltipContent += `<div class="tooltip-row"><span>Feature:</span><span><b>${d.data.feature}</b></span></div>`;
+                    tooltipContent += `<div class="tooltip-row"><span>Condition:</span><span><b>${symbol}</b></span></div>`;
+                    tooltipContent += `<div class="tooltip-row"><span>Threshold:</span><span><b>${d.data.threshold.toFixed(2)}</b></span></div>`;
+                } else {
+                    tooltipContent += `<div class="tooltip-row"><span>Node Type:</span><span>Leaf</span></div>`;
+                }
+
+                tooltipContent += `<div class="tooltip-row"><span>Samples:</span><span><b>${d.data.samples}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Probas:</span><span><b>${d.data.probas.map(p => (p * 100).toFixed(2) + '%').join(', ')}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Coverage:</span><span><b>${d.data.coverage.map(c => (c * 100).toFixed(2) + '%').join(', ')}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Custom:</span><span><b>${d.data.is_custom ? "Yes" : "No"}</b></span></div>`;
+
+                tooltip.transition().duration(200).style("opacity", .9);
+                tooltip.html(tooltipContent)
+                  .style("left", (event.pageX + 10) + "px")
+                  .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", () => tooltip.transition().duration(300).style("opacity", 0));
+
+            nodeEnter.append('text')
+            .attr("dy", ".35em")
+            .attr("font-weight", 700)
+            .attr("x", d => d.children || d._children ? -13 : 13)
+            .attr("text-anchor", d => d.children || d._children ? "end" : "start")
+            .text(d => {
+                if (d.data.feature) {
+                    const symbol = getConditionSymbol(d.data.condition);
+                    return `${d.data.feature} ${symbol} ${d.data.threshold.toFixed(2)}`;
+                } else {
+                    return `${d.data.samples}`;
+                }
+            }).attr("transform", "rotate(-20)");
+
+            const nodeUpdate = nodeEnter.merge(node);
+
+            nodeEnter.on("mouseover", (event, d) => {
+                let tooltipContent = d.data.feature
+                    ? `<div class="tooltip-row"><span>Feature:</span><span><b>${d.data.feature}</b></span></div>
+<br><div class="tooltip-row"><span>Condition:</span><span><b>${d.data.condition}</b></span></div>
+<br><div class="tooltip-row"><span>Threshold:</span><span><b>${d.data.threshold.toFixed(2)}</b></span></div>`
+                    : `Leaf Node`;
+
+                tooltipContent += `<br><div class="tooltip-row"><span>Samples:</span><span><b>${d.data.samples} (${Math.round(100*d.data.samples/maxSamples,2)}%)</b></span></div>`;
+
+                tooltipContent += `<br><div class="tooltip-table">`
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Classes</b></div>${d.data.targets.map(p => '<div class="tooltip-table-cell"><b>' + p + '</b></div>').join('')}</div>`;
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Probas</b></div>${d.data.probas.map(p => '<div class="tooltip-table-cell">' +(p * 100).toFixed(2) + '%</div>').join('')}</div>`;
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Coverage</b></div>${d.data.coverage.map(p => '<div class="tooltip-table-cell">' + (p * 100).toFixed(2) + '%</div>').join('')}</div>`;
+                tooltipContent += `</div>`
+
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html(tooltipContent)
+                    .style("left", (event.pageX + 28) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", d => {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+            nodeUpdate.transition()
+                .duration(750)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            nodeUpdate.select('circle')
+                .attr('r', d => radiusScale(d.data.samples))
+                .style("fill", d => d.data.is_custom ? "green" : "red")  // Color based on is_custom
+                .style("stroke", d => d._children ? "lightsteelblue" : "#fff")
+                .attr('cursor', 'pointer');
+
+            nodeUpdate.select('circle.node')
+                .attr('r', 10)
+                .style("fill", d => d.data.feature ? "#fff" : colorScale(d.data.probas[1]))
+                .attr('cursor', 'pointer');
+
+            const nodeExit = node.exit().transition()
+                .duration(750)
+                .attr("transform", d => `translate(${source.x},${source.y})`)
+                .remove();
+
+            nodeExit.select('circle').attr('r', 1e-6);
+            nodeExit.select('text').style('fill-opacity', 1e-6);
+
+            const link = g.selectAll('path.link')
+                .data(links, d => d.id);
+
+
+            const linkEnter = link.enter().insert('path', "g")
+                .attr("class", "link")
+                .attr('d', d => {
+                    const o = {x: source.x0, y: source.y0};
+                    return diagonal(o, o);
+                })
+                .style("stroke-width", d => linkScale(getMaxProbaIncrease(d)));
+
+            const linkUpdate = linkEnter.merge(link);
+
+
+            linkUpdate.transition()
+                .duration(750)
+                .attr('d', d => diagonal(d, d.parent))
+                .style("stroke-width", d => linkScale(getMaxProbaIncrease(d)));
+
+            link.exit().transition()
+                .duration(750)
+                .attr('d', d => {
+                    const o = {x: source.x, y: source.y};
+                    return diagonal(o, o);
+                })
+                .remove();
+
+            nodes.forEach(d => {
+                d.x0 = d.x;
+                d.y0 = d.y;
+            });
+
+            function diagonal(s, d) {
+                return `M ${s.x} ${s.y}
+                        C ${s.x} ${(s.y + d.y) / 2},
+                          ${d.x} ${(s.y + d.y) / 2},
+                          ${d.x} ${d.y}`;
+            }
+        }
+
+        update(root);
+
+        // Fit to screen function
+        function fitToScreen() {
+            const bounds = g.node().getBBox();
+            const fullWidth = width + margin.left + margin.right;
+            const fullHeight = height + margin.top + margin.bottom;
+            const scale = 0.95 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+            const translate = [
+                fullWidth / 2 - scale * (bounds.x + bounds.width / 2),
+                fullHeight / 2 - scale * (bounds.y + bounds.height / 2)
+            ];
+
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+            );
+        }
+
+        // Unfold all branches function
+        function unfoldAll() {
+            expand(root);
+            update(root);
+            fitToScreen();
+        }
+
+        // Add event listener to the fit button
+        d3.select("#fit-button").on("click", fitToScreen);
+
+        // Add event listener to the unfold all button
+        d3.select("#unfold-all-button").on("click", unfoldAll);
+
+        // Initial fit to screen
+        fitToScreen();
+    </script>
+</body>
+</html>

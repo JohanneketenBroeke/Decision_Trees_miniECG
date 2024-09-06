@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- TODO: add layer indicators-->
+    <!-- TODO: add target names to probas-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotated Decision Tree Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #tree-container {
+            width: 100%;
+            height: 100%;
+        }
+        #explainer {
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .node circle {
+            stroke-width: 2px;
+        }
+        .node text {
+            font: 12px sans-serif;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1px;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+            width: 450px;
+        }
+        .tooltip-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 5px;
+        }
+        .tooltip-label {
+          margin-right: 10px;
+        }
+        .tooltip-table {
+          width: 100%;
+          display: table;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+        .tooltip-table-row {
+          display: table-row;
+        }
+        .tooltip-table-cell {
+          display: table-cell;
+          padding: 5px;
+          border: 1px solid #ddd;
+          text-align: center;
+          vertical-align: middle;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .tooltip-table-row.header {
+          font-weight: bold;
+          background-color: #f2f2f2;
+        }
+
+
+        #fit-button, #unfold-all-button, #collapse-button {
+            position: absolute;
+            top: 10px;
+            z-index: 1000;
+        }
+        #fit-button {
+            left: 10px;
+        }
+        #unfold-all-button {
+            left: 120px;
+        }
+        #collapse-button {
+            left: 220px;
+        }
+    </style>
+</head>
+<body>
+    <button id="fit-button">Fit to Screen</button>
+    <button id="unfold-all-button">Unfold All</button>
+    <button id="collapse-button">Collapse Nodes</button>
+
+    <div id="explainer"><== True | False ==></div>
+    <div id="tree-container"></div>
+
+    <script>
+        // The treeData variable will be defined here by the Python script
+        const treeData = {"root": {"name": "node_0", "feature": "QRS vector Lead S1", "condition": "less_than_or_equal", "threshold": 0.14500000327825546, "class_counts": [477, 477], "samples": 956, "targets": ["Abnormal", "Control"], "probas": [0.5, 0.5], "coverage": [1.2857142857142858, 0.8153846153846154], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_1", "feature": "QRS amplitude Lead L1", "condition": "less_than_or_equal", "threshold": 0.7049999833106995, "class_counts": [235, 417], "samples": 653, "targets": ["Abnormal", "Control"], "probas": [0.3604294478527607, 0.6395705521472392], "coverage": [0.633423180592992, 0.7128205128205128], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_3", "feature": "QRS vector Lead S1", "condition": "less_than_or_equal", "threshold": 0.033552469685673714, "class_counts": [123, 95], "samples": 219, "targets": ["Abnormal", "Control"], "probas": [0.5642201834862385, 0.43577981651376146], "coverage": [0.33153638814016173, 0.1623931623931624], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_13", "feature": "QRS amplitude Lead A2", "condition": "less_than_or_equal", "threshold": 0.14889249205589294, "class_counts": [52, 66], "samples": 119, "targets": ["Abnormal", "Control"], "probas": [0.4406779661016949, 0.559322033898305], "coverage": [0.14016172506738545, 0.11282051282051282], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_15", "feature": null, "condition": null, "threshold": null, "class_counts": [28, 17], "samples": 46, "targets": ["Abnormal", "Control"], "probas": [0.6222222222222222, 0.37777777777777777], "coverage": [0.07547169811320754, 0.02905982905982906], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_16", "feature": null, "condition": null, "threshold": null, "class_counts": [23, 49], "samples": 73, "targets": ["Abnormal", "Control"], "probas": [0.3194444444444444, 0.6805555555555556], "coverage": [0.06199460916442048, 0.08376068376068375], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}, {"name": "node_14", "feature": "Morphology Lead S1_both positive and negative, no notch/acc", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [69, 30], "samples": 100, "targets": ["Abnormal", "Control"], "probas": [0.696969696969697, 0.30303030303030304], "coverage": [0.18598382749326145, 0.05128205128205128], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_17", "feature": null, "condition": null, "threshold": null, "class_counts": [41, 10], "samples": 52, "targets": ["Abnormal", "Control"], "probas": [0.803921568627451, 0.19607843137254902], "coverage": [0.1105121293800539, 0.017094017094017096], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_18", "feature": null, "condition": null, "threshold": null, "class_counts": [27, 20], "samples": 48, "targets": ["Abnormal", "Control"], "probas": [0.574468085106383, 0.425531914893617], "coverage": [0.07277628032345014, 0.03418803418803419], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}, {"name": "node_4", "feature": "QRS amplitude Lead I2", "condition": "less_than_or_equal", "threshold": 0.925000011920929, "class_counts": [104, 329], "samples": 434, "targets": ["Abnormal", "Control"], "probas": [0.24018475750577367, 0.7598152424942263], "coverage": [0.2803234501347709, 0.5623931623931624], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_5", "feature": "QRS amplitude Lead S1", "condition": "less_than_or_equal", "threshold": 0.33500000834465027, "class_counts": [63, 299], "samples": 363, "targets": ["Abnormal", "Control"], "probas": [0.17403314917127072, 0.8259668508287292], "coverage": [0.16981132075471697, 0.5111111111111111], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_19", "feature": null, "condition": null, "threshold": null, "class_counts": [24, 59], "samples": 84, "targets": ["Abnormal", "Control"], "probas": [0.2891566265060241, 0.7108433734939759], "coverage": [0.0646900269541779, 0.10085470085470086], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "node_20", "feature": "QRS vector Lead L1", "condition": "less_than_or_equal", "threshold": 0.3100000023841858, "class_counts": [38, 240], "samples": 279, "targets": ["Abnormal", "Control"], "probas": [0.1366906474820144, 0.8633093525179856], "coverage": [0.10242587601078167, 0.41025641025641024], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_21", "feature": null, "condition": null, "threshold": null, "class_counts": [21, 192], "samples": 214, "targets": ["Abnormal", "Control"], "probas": [0.09859154929577464, 0.9014084507042254], "coverage": [0.05660377358490566, 0.3282051282051282], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_22", "feature": null, "condition": null, "threshold": null, "class_counts": [17, 47], "samples": 65, "targets": ["Abnormal", "Control"], "probas": [0.265625, 0.734375], "coverage": [0.04582210242587601, 0.08034188034188035], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}, {"name": "leaf_6", "feature": null, "condition": null, "threshold": null, "class_counts": [38, 32], "samples": 71, "targets": ["Abnormal", "Control"], "probas": [0.5428571428571428, 0.45714285714285713], "coverage": [0.10242587601078167, 0.0547008547008547], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}, {"name": "node_2", "feature": "Morphology Lead L2_infrequent_sklearn", "condition": "less_than_or_equal", "threshold": 0.5, "class_counts": [227, 75], "samples": 303, "targets": ["Abnormal", "Control"], "probas": [0.7516556291390728, 0.24834437086092714], "coverage": [0.6118598382749326, 0.1282051282051282], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "node_7", "feature": "QRS vector Lead I3", "condition": "less_than_or_equal", "threshold": -0.33500000834465027, "class_counts": [126, 71], "samples": 198, "targets": ["Abnormal", "Control"], "probas": [0.6395939086294417, 0.3604060913705584], "coverage": [0.33962264150943394, 0.12136752136752137], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_9", "feature": null, "condition": null, "threshold": null, "class_counts": [51, 8], "samples": 60, "targets": ["Abnormal", "Control"], "probas": [0.864406779661017, 0.13559322033898305], "coverage": [0.13746630727762804, 0.013675213675213675], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "node_10", "feature": "QRS amplitude Lead S1", "condition": "less_than_or_equal", "threshold": 0.36500000953674316, "class_counts": [73, 64], "samples": 138, "targets": ["Abnormal", "Control"], "probas": [0.5328467153284672, 0.46715328467153283], "coverage": [0.1967654986522911, 0.1094017094017094], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_11", "feature": null, "condition": null, "threshold": null, "class_counts": [34, 11], "samples": 46, "targets": ["Abnormal", "Control"], "probas": [0.7555555555555555, 0.24444444444444444], "coverage": [0.09164420485175202, 0.018803418803418803], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_12", "feature": null, "condition": null, "threshold": null, "class_counts": [37, 54], "samples": 92, "targets": ["Abnormal", "Control"], "probas": [0.4065934065934066, 0.5934065934065934], "coverage": [0.09973045822102426, 0.09230769230769231], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}, {"name": "node_8", "feature": "QRS vector Lead A2", "condition": "less_than_or_equal", "threshold": 0.17500000447034836, "class_counts": [97, 7], "samples": 105, "targets": ["Abnormal", "Control"], "probas": [0.9326923076923077, 0.0673076923076923], "coverage": [0.261455525606469, 0.011965811965811967], "is_custom": false, "ignore_after": [], "features_to_use_next": [], "children": [{"name": "leaf_23", "feature": null, "condition": null, "threshold": null, "class_counts": [34, 6], "samples": 41, "targets": ["Abnormal", "Control"], "probas": [0.85, 0.15], "coverage": [0.09164420485175202, 0.010256410256410256], "is_custom": false, "ignore_after": [], "features_to_use_next": []}, {"name": "leaf_24", "feature": null, "condition": null, "threshold": null, "class_counts": [62, 1], "samples": 64, "targets": ["Abnormal", "Control"], "probas": [0.9841269841269841, 0.015873015873015872], "coverage": [0.16711590296495957, 0.0017094017094017094], "is_custom": false, "ignore_after": [], "features_to_use_next": []}]}]}]}, "feature_names": ["QRS amplitude Lead L2", "QRS amplitude Lead I3", "QRS vector Lead L2", "QRS amplitude Lead I2", "QRS vector Lead I1", "QRS vector Lead L1", "QRS vector Lead A2", "QRS vector Lead I2", "QRS vector Lead I3", "QRS amplitude Lead I1", "QRS amplitude Lead A2", "QRS vector Lead A1", "QRS vector Lead S1", "QRS amplitude Lead A1", "QRS amplitude Lead S1", "QRS amplitude Lead L1", "Morphology Lead A1_both positive and negative, no notch/acc", "Morphology Lead A1_none", "Morphology Lead A1_only positive, no notch/acc", "Morphology Lead A1_infrequent_sklearn", "Morphology Lead A2_both positive and negative, no notch/acc", "Morphology Lead A2_only positive, no notch/acc", "Morphology Lead A2_infrequent_sklearn", "Morphology Lead I2_both positive and negative, no notch/acc", "Morphology Lead I2_only negative, no notch/acc", "Morphology Lead I2_infrequent_sklearn", "Morphology Lead I1_both positive and negative, no notch/acc", "Morphology Lead I1_infrequent_sklearn", "Morphology Lead I3_both positive and negative, no notch/acc", "Morphology Lead I3_only negative, no notch/acc", "Morphology Lead I3_infrequent_sklearn", "Morphology Lead L2_both positive and negative, no notch/acc", "Morphology Lead L2_infrequent_sklearn", "Morphology Lead S1_both positive and negative, no notch/acc", "Morphology Lead S1_only positive, no notch/acc", "Morphology Lead S1_infrequent_sklearn", "Morphology Lead L1_both positive and negative, no notch/acc", "Morphology Lead L1_infrequent_sklearn"], "n_classes": 2, "classes": [0, 1]};
+
+        // Set up the dimensions for the diagram
+        const margin = {top: 40, right: 90, bottom: 50, left: 90};
+        const width = window.innerWidth - margin.left - margin.right;
+        const height = window.innerHeight - margin.top - margin.bottom;
+
+        const conditionSymbols = {
+            "less_than": "<",
+            "less_than_or_equal": "≤",
+            "greater_than": ">",
+            "greater_than_or_equal": "≥"
+        };
+        function collapseNodes(d, minSamples) {
+            if (d.children) {
+                if (d.data.samples < minSamples) {
+                    d._children = d.children;
+                    d.children = null;
+                } else {
+                    d.children.forEach(child => collapseNodes(child, minSamples));
+                }
+            }
+        }
+
+        // Add this function to handle the collapse button click
+        function handleCollapse() {
+            const minSamples = parseInt(prompt("Enter minimum number of samples:", "100"));
+            if (isNaN(minSamples)) return;
+
+            collapseNodes(root, minSamples);
+            update(root);
+            fitToScreen();
+        }
+
+        // Add event listener to the collapse button
+        d3.select("#collapse-button").on("click", handleCollapse);
+
+        // Helper function to get the symbol for a condition
+        function getConditionSymbol(condition) {
+            return conditionSymbols[condition] || condition;
+        }
+        // Create the SVG container
+        const svg = d3.select("#tree-container")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom);
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Create a tooltip
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        function getMaxProba(d) {
+            return Math.max(...d.data.probas);
+        }
+
+        function getProbaIncrease(d) {
+            if (!d.parent) return 0;
+            return getMaxProba(d) - getMaxProba(d.parent);
+        }
+
+        function getMaxProbaIncrease(d) {
+            if (!d.parent) return 0;
+            return Math.max(...d.data.probas.map((p, i) => p - d.parent.data.probas[i]));
+        }
+
+        // Create a tree layout
+        const tree = d3.tree().size([width, height]);
+
+        // Create the root node
+        const root = d3.hierarchy(treeData.root);
+
+        // Calculate the maximum number of samples for scaling
+        const maxSamples = d3.max(root.descendants(), d => d.data.samples);
+
+        // Calculate the maximum probability in the entire tree
+        const rootMaxProba = getMaxProba(root);
+
+        // Create a scale for node radius
+        const radiusScale = d3.scaleSqrt()
+            .domain([0, maxSamples])
+            .range([3, 20]);
+
+        // Create a scale for link thickness
+        const linkScale = d3.scaleLinear()
+            .domain([0, 1])
+            .range([1, 17]);
+
+        // Function to recursively process the tree and set is_custom
+        let nodeId = 0;
+        root.eachBefore(d => {
+            d.id = nodeId++;
+            d.x0 = width / 2;
+            d.y0 = 0;
+        });
+
+
+
+        // Collapse the node and all its children
+        function collapse(d) {
+            if (d.children) {
+                d._children = d.children;
+                d._children.forEach(collapse);
+                d.children = null;
+            }
+        }
+
+        // Expand a node
+        function expand(d) {
+            if (d._children) {
+                d.children = d._children;
+                d._children = null;
+            }
+            if (d.children) {
+                d.children.forEach(expand);
+            }
+        }
+
+        // Toggle children on click
+        function click(event, d) {
+            if (d.children) {
+                collapse(d);
+            } else {
+                expand(d);
+            }
+            update(d);
+        }
+
+        // Update the tree
+        function update(source) {
+            const treeData = tree(root);
+            const nodes = treeData.descendants();
+            const links = treeData.descendants().slice(1);
+
+            nodes.forEach(d => {
+                d.y = d.depth * 180;
+            });
+
+            const node = g.selectAll('.node')
+                .data(nodes, d => d.id || (d.id = ++nodeId));
+
+            const nodeEnter = node.enter().append('g')
+                .attr('class', 'node')
+                .attr("transform", d => `translate(${source.x0},${source.y0})`)
+                .on('click', (event, d) => {
+                    if (d.children) {
+                        d._children = d.children;
+                        d.children = null;
+                    } else {
+                        d.children = d._children;
+                        d._children = null;
+                    }
+                    update(d);
+                });
+
+            nodeEnter.append('circle')
+                .attr('r', 1e-6)
+                .style("fill", d => d.data.is_custom ? "green" : "red")  // Color based on is_custom
+                .style("stroke", d => d._children ? "lightsteelblue" : "#fff")
+                .on("mouseover", function(event, d) {
+                let tooltipContent = '';
+
+                if (d.data.feature) {
+                    const symbol = getConditionSymbol(d.data.condition);
+                    tooltipContent += `<div class="tooltip-row"><span>Feature:</span><span><b>${d.data.feature}</b></span></div>`;
+                    tooltipContent += `<div class="tooltip-row"><span>Condition:</span><span><b>${symbol}</b></span></div>`;
+                    tooltipContent += `<div class="tooltip-row"><span>Threshold:</span><span><b>${d.data.threshold.toFixed(2)}</b></span></div>`;
+                } else {
+                    tooltipContent += `<div class="tooltip-row"><span>Node Type:</span><span>Leaf</span></div>`;
+                }
+
+                tooltipContent += `<div class="tooltip-row"><span>Samples:</span><span><b>${d.data.samples}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Probas:</span><span><b>${d.data.probas.map(p => (p * 100).toFixed(2) + '%').join(', ')}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Coverage:</span><span><b>${d.data.coverage.map(c => (c * 100).toFixed(2) + '%').join(', ')}</b></span></div>`;
+                tooltipContent += `<div class="tooltip-row"><span>Custom:</span><span><b>${d.data.is_custom ? "Yes" : "No"}</b></span></div>`;
+
+                tooltip.transition().duration(200).style("opacity", .9);
+                tooltip.html(tooltipContent)
+                  .style("left", (event.pageX + 10) + "px")
+                  .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", () => tooltip.transition().duration(300).style("opacity", 0));
+
+            nodeEnter.append('text')
+            .attr("dy", ".35em")
+            .attr("font-weight", 700)
+            .attr("x", d => d.children || d._children ? -13 : 13)
+            .attr("text-anchor", d => d.children || d._children ? "end" : "start")
+            .text(d => {
+                if (d.data.feature) {
+                    const symbol = getConditionSymbol(d.data.condition);
+                    return `${d.data.feature} ${symbol} ${d.data.threshold.toFixed(2)}`;
+                } else {
+                    return `${d.data.samples}`;
+                }
+            }).attr("transform", "rotate(-20)");
+
+            const nodeUpdate = nodeEnter.merge(node);
+
+            nodeEnter.on("mouseover", (event, d) => {
+                let tooltipContent = d.data.feature
+                    ? `<div class="tooltip-row"><span>Feature:</span><span><b>${d.data.feature}</b></span></div>
+<br><div class="tooltip-row"><span>Condition:</span><span><b>${d.data.condition}</b></span></div>
+<br><div class="tooltip-row"><span>Threshold:</span><span><b>${d.data.threshold.toFixed(2)}</b></span></div>`
+                    : `Leaf Node`;
+
+                tooltipContent += `<br><div class="tooltip-row"><span>Samples:</span><span><b>${d.data.samples} (${Math.round(100*d.data.samples/maxSamples,2)}%)</b></span></div>`;
+
+                tooltipContent += `<br><div class="tooltip-table">`
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Classes</b></div>${d.data.targets.map(p => '<div class="tooltip-table-cell"><b>' + p + '</b></div>').join('')}</div>`;
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Probas</b></div>${d.data.probas.map(p => '<div class="tooltip-table-cell">' +(p * 100).toFixed(2) + '%</div>').join('')}</div>`;
+                tooltipContent += `<div class="tooltip-table-row"><div class="tooltip-table-cell"><b>Coverage</b></div>${d.data.coverage.map(p => '<div class="tooltip-table-cell">' + (p * 100).toFixed(2) + '%</div>').join('')}</div>`;
+                tooltipContent += `</div>`
+
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html(tooltipContent)
+                    .style("left", (event.pageX + 28) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", d => {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+            nodeUpdate.transition()
+                .duration(750)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            nodeUpdate.select('circle')
+                .attr('r', d => radiusScale(d.data.samples))
+                .style("fill", d => d.data.is_custom ? "green" : "red")  // Color based on is_custom
+                .style("stroke", d => d._children ? "lightsteelblue" : "#fff")
+                .attr('cursor', 'pointer');
+
+            nodeUpdate.select('circle.node')
+                .attr('r', 10)
+                .style("fill", d => d.data.feature ? "#fff" : colorScale(d.data.probas[1]))
+                .attr('cursor', 'pointer');
+
+            const nodeExit = node.exit().transition()
+                .duration(750)
+                .attr("transform", d => `translate(${source.x},${source.y})`)
+                .remove();
+
+            nodeExit.select('circle').attr('r', 1e-6);
+            nodeExit.select('text').style('fill-opacity', 1e-6);
+
+            const link = g.selectAll('path.link')
+                .data(links, d => d.id);
+
+
+            const linkEnter = link.enter().insert('path', "g")
+                .attr("class", "link")
+                .attr('d', d => {
+                    const o = {x: source.x0, y: source.y0};
+                    return diagonal(o, o);
+                })
+                .style("stroke-width", d => linkScale(getMaxProbaIncrease(d)));
+
+            const linkUpdate = linkEnter.merge(link);
+
+
+            linkUpdate.transition()
+                .duration(750)
+                .attr('d', d => diagonal(d, d.parent))
+                .style("stroke-width", d => linkScale(getMaxProbaIncrease(d)));
+
+            link.exit().transition()
+                .duration(750)
+                .attr('d', d => {
+                    const o = {x: source.x, y: source.y};
+                    return diagonal(o, o);
+                })
+                .remove();
+
+            nodes.forEach(d => {
+                d.x0 = d.x;
+                d.y0 = d.y;
+            });
+
+            function diagonal(s, d) {
+                return `M ${s.x} ${s.y}
+                        C ${s.x} ${(s.y + d.y) / 2},
+                          ${d.x} ${(s.y + d.y) / 2},
+                          ${d.x} ${d.y}`;
+            }
+        }
+
+        update(root);
+
+        // Fit to screen function
+        function fitToScreen() {
+            const bounds = g.node().getBBox();
+            const fullWidth = width + margin.left + margin.right;
+            const fullHeight = height + margin.top + margin.bottom;
+            const scale = 0.95 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+            const translate = [
+                fullWidth / 2 - scale * (bounds.x + bounds.width / 2),
+                fullHeight / 2 - scale * (bounds.y + bounds.height / 2)
+            ];
+
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+            );
+        }
+
+        // Unfold all branches function
+        function unfoldAll() {
+            expand(root);
+            update(root);
+            fitToScreen();
+        }
+
+        // Add event listener to the fit button
+        d3.select("#fit-button").on("click", fitToScreen);
+
+        // Add event listener to the unfold all button
+        d3.select("#unfold-all-button").on("click", unfoldAll);
+
+        // Initial fit to screen
+        fitToScreen();
+    </script>
+</body>
+</html>
